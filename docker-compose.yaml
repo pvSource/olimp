@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+  nginx:
+    container_name: olimp_nginx
+    image: nginx:latest
+    volumes:
+      - ./dockerfiles/nginx/conf.d:/etc/nginx/conf.d
+      - ./app:/var/www
+    ports:
+      - "${HOST_PORT_NGINX}:80"
+    networks:
+      - olimp_network
+    depends_on:
+      - app
+
+  app:
+    container_name: olimp_app
+    build:
+      context: ./dockerfiles/app
+      dockerfile: Dockerfile
+    image: php:8.4-fpm
+    volumes:
+      - ./app:/var/www
+      - ./dockerfiles/app/php.ini:/usr/local/etc/php/conf.d/php.ini
+    networks:
+      - olimp_network
+    depends_on:
+      - postgres
+
+  postgres:
+    container_name: olimp_postgresql
+    image: postgres:17.2
+    volumes:
+      - ./db_data/postgresql/:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${HOST_PORT_POSTGRES}:5432"
+    networks:
+      - olimp_network
+
+networks:
+  olimp_network:
+    driver: bridge
